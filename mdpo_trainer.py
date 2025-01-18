@@ -9,10 +9,10 @@ class mDPOTrainer(DPOTrainer):
         concatenated_batch = {}
 
         if self.is_encoder_decoder:
-            max_length = max(batch["chosen_labels"].shape[1], batch["rejected_labels"].shape[1])
+            max_length = max(batch["chosen_labels"].shape[1], batch["rejected_labels"].shape[1])#因为encoder-decoder模型的解码输出只包含label，所以只取label的最大长度
         else:
-            max_length = max(batch["chosen_input_ids"].shape[1], batch["rejected_input_ids"].shape[1])
-
+            max_length = max(batch["chosen_input_ids"].shape[1], batch["rejected_input_ids"].shape[1])#因为decoder-encoder模型的解码输入包含input_ids和attention_mask，所以取input_ids的最大长度
+        #将chosen和rejected的input_ids和attention_mask拼接
         for k in batch:
             if k.startswith("chosen") and isinstance(batch[k], torch.Tensor):
                 pad_value = self.label_pad_token_id if "labels" in k or self.is_encoder_decoder else self.padding_value
@@ -30,7 +30,7 @@ class mDPOTrainer(DPOTrainer):
                     dim=0,
                 ).to(self.accelerator.device)
 
-        concatenated_batch["concatenated_image"] = batch["image"] + batch["image"]
+        concatenated_batch["concatenated_image"] = batch["image"] + batch["image"]#将chosen和rejected的图片拼接
 
         if self.is_encoder_decoder:
             concatenated_batch["concatenated_input_ids"] = batch["prompt_input_ids"].repeat(2, 1)
@@ -48,12 +48,12 @@ class mDPOTrainer(DPOTrainer):
             "images": concatenated_batch["concatenated_image"],
             "labels": concatenated_batch["concatenated_labels"],
         }
-
+        #THREEGOLD NEED CHANGE：先得到文本logits
         outputs, refined_labels = model(
             concatenated_batch["concatenated_input_ids"],
             attention_mask=concatenated_batch["concatenated_attention_mask"],
             **model_kwargs,
-        )
+        )#得到输出和refined_labels
         all_logits = outputs.logits.to(torch.float32)
 
         all_logps = self._get_batch_logps(
@@ -62,18 +62,18 @@ class mDPOTrainer(DPOTrainer):
             average_log_prob=False,
         )
 
-        chosen_logps = all_logps[:len_chosen]
-        rejected_logps = all_logps[len_chosen:]
+        chosen_logps = all_logps[:len_chosen]#前len_chosen个是chosen的logps
+        rejected_logps = all_logps[len_chosen:]#后len_chosen个是rejected的logps
 
-        chosen_logits = all_logits[:len_chosen]
-        rejected_logits = all_logits[len_chosen:]
+        chosen_logits = all_logits[:len_chosen]#前len_chosen个是chosen的logits
+        rejected_logits = all_logits[len_chosen:]#后len_chosen个是rejected的logits
 
         imageless_model_kwargs = {
-                "labels": batch["chosen_labels"],
+                "labels": batch["chosen_labels"],#不是concatenated_batch
                 "images": batch["image"],
                 "mask_visual_tokens": True,
             }
-            
+        #利用maxk的图像再跑一次模型，得到imageless_chosen_outputs和imageless_chosen_label
         imageless_chosen_outputs, imageless_chosen_label = model(
             batch["chosen_input_ids"],
             attention_mask=batch["chosen_attention_mask"],
@@ -86,7 +86,7 @@ class mDPOTrainer(DPOTrainer):
             imageless_chosen_label,
             average_log_prob=False,
         )
-
+        #得到DPO中文本的choose,rejected,imageless_chosen的logps和logits
         return (chosen_logps, rejected_logps, imageless_chosen_logps, chosen_logits, rejected_logits, imageless_chosen_logits)
 
     def dpo_loss(
@@ -99,15 +99,15 @@ class mDPOTrainer(DPOTrainer):
         reference_imageless_chosen_logps: torch.FloatTensor, 
         reference_free: bool = False,
     ):
-        pi_logratios = policy_chosen_logps - policy_rejected_logps
+        pi_logratios = policy_chosen_logps - policy_rejected_logps #把DPO的log除法操作
         ref_logratios = reference_chosen_logps - reference_rejected_logps
 
         if reference_free:
             ref_logratios = 0
 
-        logits = pi_logratios - ref_logratios  # response preference
+        logits = pi_logratios - ref_logratios  # response preference，让模型的差值和reference的差值尽量一致？
 
-        image_conditional_pi_logratios = policy_chosen_logps - policy_imageless_chosen_logps
+        image_conditional_pi_logratios = policy_chosen_logps - policy_imageless_chosen_logps #image_less的chosen和rejected的logps
         image_conditional_ref_logratios = reference_chosen_logps - reference_imageless_chosen_logps
 
         if reference_free:
@@ -145,14 +145,14 @@ class mDPOTrainer(DPOTrainer):
         (
             policy_chosen_logps,
             policy_rejected_logps,
-            policy_imageless_chosen_logps,
+            policy_imageless_chosen_logps,#噪音图像对应的token损失（包括choosen和rejected的）
             policy_chosen_logits,
             policy_rejected_logits,
             policy_imageless_chosen_logits,
         ) = self.concatenated_forward(model, batch)
         with torch.no_grad():
             if self.ref_model is None:
-                with self.accelerator.unwrap_model(self.model).disable_adapter():
+                with self.accelerator.unwrap_model(self.model).disable_adapter():#不使用adapter的reference_model得到对应分数
                     (
                         reference_chosen_logps,
                         reference_rejected_logps,

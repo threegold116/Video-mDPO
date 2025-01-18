@@ -1,13 +1,15 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Any
 from trl.trainer.utils import DPODataCollatorWithPadding
 from PIL import Image
-
+import transformers
 from bunny.bunny_utils.util.mm_utils import tokenizer_image_token
 
 
 @dataclass
 class mDPODataCollatorBunny(DPODataCollatorWithPadding):
+    #THREEGOLD CHANGE
+
     def tokenize_batch_element(
         self,
         prompt: str,
@@ -24,9 +26,10 @@ class mDPODataCollatorBunny(DPODataCollatorWithPadding):
         prompt_tokens["attention_mask"] = [1 for _ in range(len(prompt_tokens["input_ids"]))]
 
         eos_token_id = self.tokenizer.eos_token_id
-        # Get indices in list prompt_tokens["input_ids"] that equals the EOS token (often 0)
+        # Get indices in list prompt_tokens["input_ids"] that equals the EOS token (often 0) 
+        # 获取prompt_tokens["input_ids"]中等于EOS token的索引（通常为0）
         eos_indices_prompt = [i for i, x in enumerate(prompt_tokens["input_ids"]) if x == eos_token_id]
-        # attention mask these indices to eos_token_id
+        # attention mask these indices to eos_token_id#将这些索引的attention mask设置为0
         new_attention_mask = [
             0 if i in eos_indices_prompt else p for i, p in enumerate(prompt_tokens["attention_mask"])
         ]
@@ -34,7 +37,7 @@ class mDPODataCollatorBunny(DPODataCollatorWithPadding):
 
         # do the same for chosen and rejected
         eos_indices_chosen = [i for i, x in enumerate(chosen_tokens["input_ids"]) if x == eos_token_id]
-        new_attention_mask_c = [
+        new_attention_mask_c = [#
             0 if i in eos_indices_chosen else p for i, p in enumerate(chosen_tokens["attention_mask"])
         ]
         chosen_tokens["attention_mask"] = new_attention_mask_c
@@ -91,9 +94,9 @@ class mDPODataCollatorBunny(DPODataCollatorWithPadding):
                 if type_key == "token_type_ids":
                     continue
                 batch[f"{k}_{type_key}"] = tokens
-
-        image = Image.open(img_path)
-        image_tensor = self.model.process_images([image], self.model.config).to(dtype=self.model.dtype)
+        #这里可能得根据视频修改
+        image = Image.open(img_path)#打开图片
+        image_tensor = self.model.process_images([image], self.model.config).to(dtype=self.model.dtype)#将图片转换为tensor
         batch["image"] = image_tensor
 
         return batch
@@ -102,12 +105,12 @@ class mDPODataCollatorBunny(DPODataCollatorWithPadding):
             tokenized_batch = []
 
             for feature in features:
-                prompt = feature["prompt"]
-                chosen = feature["chosen"]
-                rejected = feature["rejected"]
-                img_path = feature["img_path"]
+                prompt = feature["prompt"]#读取prompt
+                chosen = feature["chosen"]#读取chosen
+                rejected = feature["rejected"]#读取rejected
+                img_path = feature["img_path"]#读取img_path
 
-                batch_element = self.tokenize_batch_element(prompt, chosen, rejected, img_path)
+                batch_element = self.tokenize_batch_element(prompt, chosen, rejected, img_path)#调用tokenize_batch_element函数
                 tokenized_batch.append(batch_element)
 
             collated_batch = self.collate(tokenized_batch)

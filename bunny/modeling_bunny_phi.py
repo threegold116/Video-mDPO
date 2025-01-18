@@ -2354,7 +2354,7 @@ class mDPOBunnyPhiForCausalLM(BunnyPhiForCausalLM):
             output_hidden_states=output_hidden_states,
             return_dict=return_dict
         ), labels
-
+    #THREEGOLD NEED CHANGE
     def crop_images(self, images):
         new_images = []
         for image in images:

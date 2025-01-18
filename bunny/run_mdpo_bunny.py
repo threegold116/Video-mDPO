@@ -1,3 +1,5 @@
+import sys
+sys.path.insert(1,"/share/home/jfliang/Project/Hall/Video-mDPO")
 import json
 import logging
 import os
@@ -9,7 +11,8 @@ import torch.distributed
 import transformers
 from accelerate.utils import DistributedType
 from peft import LoraConfig, prepare_model_for_kbit_training
-from transformers import GPTQConfig, deepspeed
+from transformers  import deepspeed
+from transformers import GPTQConfig
 from transformers.trainer_pt_utils import LabelSmoother
 
 from bunny.modeling_bunny_phi import mDPOBunnyPhiForCausalLM
@@ -158,13 +161,13 @@ def train(config_dict):
 
     os.environ["WANDB_PROJECT"] = "VLM_DPO"
     parser = transformers.HfArgumentParser(
-        (ModelArguments, TrainingArguments, LoraArguments)
+        (ModelArguments, TrainingArguments, LoraArguments) #定义参数
     )
     (
         model_args,
         training_args,
         lora_args,
-    ) = parser.parse_dict(config_dict)
+    ) = parser.parse_dict(config_dict) #解析参数
 
     if getattr(training_args, "deepspeed", None) and getattr(
         lora_args, "q_lora", False
@@ -173,9 +176,10 @@ def train(config_dict):
 
     local_rank = training_args.local_rank
 
+
     device_map = None
-    world_size = int(os.environ.get("WORLD_SIZE", 1))
-    ddp = world_size != 1
+    world_size = int(os.environ.get("WORLD_SIZE", 1)) #获取环境变量WORLD_SIZE的值，如果为空，则设置为1
+    ddp = world_size != 1 #如果world_size不等于1，则设置ddp为True   
     if lora_args.q_lora:
         device_map = {"": int(os.environ.get("LOCAL_RANK") or 0)} if ddp else None
         if len(training_args.fsdp) > 0 or deepspeed.is_deepspeed_zero3_enabled():
@@ -188,7 +192,7 @@ def train(config_dict):
         trust_remote_code=True,
         fp32=True,
     )
-    config.use_cache = False
+    config.use_cache = False #设置use_cache为False
     config.embd_pdrop = 0
 
     # Load model and tokenizer
@@ -251,15 +255,16 @@ def train(config_dict):
     train_dataset = datasets.load_dataset('json', data_files=model_args.dataset_path, split="train")
 
     # Start trainner
+    print(LabelSmoother.ignore_index)
     trainer = mDPOTrainer(
-        model,
+        model=model,
         args=training_args,
         beta=training_args.beta,
         train_dataset=train_dataset,
         # eval_dataset=eval_dataset,
         data_collator=mDPODataCollatorBunny(
-            tokenizer,
-            model,
+            tokenizer=tokenizer,
+            model=model,
             max_length=training_args.model_max_length,
             max_prompt_length=training_args.model_max_length // 2,
             max_target_length=training_args.model_max_length // 2,
@@ -278,12 +283,21 @@ def train(config_dict):
     trainer.train(resume_from_checkpoint=False)
     trainer.save_state()
 
-    model.config.save_pretrained(training_args.output_dir)
-    safe_save_model_for_hf_trainer(trainer=trainer,
-                                    output_dir=training_args.output_dir)
+    if training_args.use_lora:
+        state_dict = get_peft_state_maybe_zero_3(model.named_parameters(), training_args.lora_bias)
+        non_lora_state_dict = get_peft_state_non_lora_maybe_zero_3(model.named_parameters())
+        if training_args.local_rank == 0 or training_args.local_rank == -1:
+            if hasattr(model, "config"):
+                model.config.save_pretrained(training_args.output_dir)
+            if hasattr(model, "generation_config"):
+                model.generation_config.save_pretrained(training_args.output_dir)
+            model.save_pretrained(training_args.output_dir, state_dict=state_dict)
+            torch.save(non_lora_state_dict, os.path.join(training_args.output_dir, "non_lora_trainables.bin"))
+    else:
+        safe_save_model_for_hf_trainer(trainer=trainer, output_dir=training_args.output_dir)
 
 
 if __name__ == "__main__":
-    with open("config.yaml") as f:
+    with open("/share/home/jfliang/Project/Hall/Video-mDPO/bunny/config.yaml") as f:#读取文件
         cfg = yaml.load(f, Loader=yaml.FullLoader)
     train(cfg)

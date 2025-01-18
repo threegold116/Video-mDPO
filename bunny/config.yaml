@@ -1,4 +1,4 @@
-model_name_or_path: "BAAI/Bunny-v1_0-3B"
+model_name_or_path: "/share/home/jfliang/Weights/Bunny-v1_0-3B"
 beta: 0.1
 output_dir: null  # to be set by the script
 bf16: true
@@ -27,6 +27,6 @@ remove_unused_columns: false
 lora_r: 64  
 lora_alpha: 128 
 lora_target_modules: all-linear 
-dataset_path: ./data/vlfeedback_llava_10k.json
+dataset_path: /share/home/jfliang/Datasets/mDPO-preference-data/vlfeedback_llava_10k.json
 run_name: mdpo_bunny
-output_dir: ./checkpoint/mdpo_bunny
+output_dir: /share/home/jfliang/Project/Hall/Video-mDPO/checkpoint/mdpo_bunny
