@@ -3,6 +3,7 @@ sys.path.insert(1,"/share/home/jfliang/Project/Hall/Video-mDPO")
 import json
 import logging
 import os
+import pathlib
 from dataclasses import dataclass, field
 from typing import Optional
 import yaml
@@ -24,6 +25,7 @@ from video_mdpo_trainer import VideomDPOTrainer
 class ModelArguments:
     model_name_or_path: str = field(default=None)
     dataset_path: str = field(default=None)
+    unfreeze_mm_vision_tower: bool = field(default=False)#THREEGOLD CHANGE: 是否冻结mm_vision_tower
 
 
 @dataclass
@@ -149,6 +151,7 @@ def print_trainable_parameters(model):
     for _, param in model.named_parameters():
         all_param += param.numel()
         if param.requires_grad:
+            print("trainable_params name:",_)
             trainable_params += param.numel()
             # print(_)
     print(
@@ -226,6 +229,7 @@ def train(config_dict):
     tokenizer.pad_token_id = tokenizer.eos_token_id
 
     if training_args.use_lora:
+        from peft import LoraConfig, get_peft_model
         if lora_args.lora_target_modules == "all-linear":
             lora_target_modules = find_all_linear_names(model)
         elif "," in lora_args.lora_target_modules:
@@ -250,6 +254,11 @@ def train(config_dict):
         if training_args.gradient_checkpointing:
             model.enable_input_require_grads()
 
+
+
+    
+    
+    
     # Load data
     train_dataset = datasets.load_dataset('json', data_files=model_args.dataset_path, split="train")
 
@@ -274,21 +283,45 @@ def train(config_dict):
         ),
         tokenizer=tokenizer,
         max_length=training_args.model_max_length,
-        peft_config=lora_config if training_args.use_lora else None,
+        peft_config=lora_config if training_args.use_lora else None,#DPOTrainer的优化，Trainer中需要传入peftmodel
         generate_during_eval=training_args.generate_during_eval,
     )
 
+    #THREEGOLD CHANGE：控制mm_vision_tower是否冻结
+    if model_args.unfreeze_mm_vision_tower:
+        trainer.model.get_vision_tower().requires_grad_(True)
+    else:
+        trainer.model.get_vision_tower().requires_grad_(False)  
+    
     print_trainable_parameters(model)
-
-    trainer.train(resume_from_checkpoint=False)
+    if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
+        trainer.train(resume_from_checkpoint=False)
+    else:
+        trainer.train()
     trainer.save_state()
 
     model.config.save_pretrained(training_args.output_dir)
-    safe_save_model_for_hf_trainer(trainer=trainer,
-                                    output_dir=training_args.output_dir)
+    safe_save_model_for_hf_trainer(trainer=trainer, output_dir=training_args.output_dir)
 
+
+    # 用于保存没有lora训练的参数(porjector)：来自LlaVA-Next仓库
+    if training_args.use_lora:
+        safe_save_model_for_hf_trainer(trainer=trainer,
+                                    output_dir=training_args.output_dir)
+        # state_dict = get_peft_state_maybe_zero_3(model.named_parameters(), lora_args.lora_bias)
+        non_lora_state_dict = get_peft_state_non_lora_maybe_zero_3(model.named_parameters())
+        if training_args.local_rank == 0 or training_args.local_rank == -1:
+            if hasattr(model, "config"):
+                model.config.save_pretrained(training_args.output_dir)
+            if hasattr(model, "generation_config"):
+                model.generation_config.save_pretrained(training_args.output_dir)
+            safe_save_model_for_hf_trainer(trainer=trainer, output_dir=training_args.output_dir)
+            # model.save_pretrained(training_args.output_dir, state_dict=state_dict)
+            torch.save(non_lora_state_dict, os.path.join(training_args.output_dir, "non_lora_trainables.bin"))
+    else:
+        safe_save_model_for_hf_trainer(trainer=trainer, output_dir=training_args.output_dir)
 
 if __name__ == "__main__":
-    with open("/share/home/jfliang/Project/Hall/Video-mDPO/llavaov/config.yaml") as f:#读取文件
+    with open("/share/home/jfliang/Project/Hall/Video-mDPO/llavaov/debug_config.yaml") as f:#读取文件
         cfg = yaml.load(f, Loader=yaml.FullLoader)
     train(cfg)

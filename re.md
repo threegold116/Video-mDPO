@@ -38,3 +38,5 @@ c. 在mdpo的get_batch_metrics中，调用mdpo的concated_metrics
 a. 再bunny_mdpo_run.py的基础上修改得到llavaov_mdpo_run.py
 b. 修改llava_qwen.py加上crop_images函数
 c. 修改config.yaml
+d. 修改merge_lora.py
+e. vit的lora要去掉吗？

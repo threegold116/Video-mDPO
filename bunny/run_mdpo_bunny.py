@@ -283,18 +283,10 @@ def train(config_dict):
     trainer.train(resume_from_checkpoint=False)
     trainer.save_state()
 
-    if training_args.use_lora:
-        state_dict = get_peft_state_maybe_zero_3(model.named_parameters(), training_args.lora_bias)
-        non_lora_state_dict = get_peft_state_non_lora_maybe_zero_3(model.named_parameters())
-        if training_args.local_rank == 0 or training_args.local_rank == -1:
-            if hasattr(model, "config"):
-                model.config.save_pretrained(training_args.output_dir)
-            if hasattr(model, "generation_config"):
-                model.generation_config.save_pretrained(training_args.output_dir)
-            model.save_pretrained(training_args.output_dir, state_dict=state_dict)
-            torch.save(non_lora_state_dict, os.path.join(training_args.output_dir, "non_lora_trainables.bin"))
-    else:
-        safe_save_model_for_hf_trainer(trainer=trainer, output_dir=training_args.output_dir)
+    model.config.save_pretrained(training_args.output_dir)
+    safe_save_model_for_hf_trainer(trainer=trainer,
+                                    output_dir=training_args.output_dir)
+    
 
 
 if __name__ == "__main__":

@@ -30,4 +30,4 @@ lora_alpha: 128
 lora_target_modules: all-linear 
 dataset_path: /share/home/jfliang/Project/Hall/Video-mDPO/data/video_data_sample.json
 run_name: mdpo_llavaov
-output_dir: /share/home/jfliang/Project/Hall/Video-mDPO/checkpoint/llava-onevision-qwen2-mdpo-lora
+output_dir: /share/home/jfliang/Project/Hall/Video-mDPO/checkpoint/llava-onevision-qwen2-mdpo-lora-debug

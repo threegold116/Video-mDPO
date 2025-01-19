@@ -15,9 +15,9 @@ def merge_lora(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-path", type=str, required=False,default="/share/home/jfliang/Project/Hall/Video-mDPO/checkpoint/llava-onevision-qwen2-mdpo-lora")
+    parser.add_argument("--model-path", type=str, required=False,default="/share/home/jfliang/Project/Hall/Video-mDPO/checkpoint/llava-onevision-qwen2-mdpo-lora-debug/")
     parser.add_argument("--model-base", type=str, required=False,default="/share/home/jfliang/Weights/llava-onevision-qwen2-7b-ov")
-    parser.add_argument("--save-model-path", type=str, required=False,default="/share/home/jfliang/Project/Hall/Video-mDPO/checkpoint_merge/mdpo_llavaov")
+    parser.add_argument("--save-model-path", type=str, required=False,default="/share/home/jfliang/Project/Hall/Video-mDPO/checkpoint_merge/mdpo_llavaov2")
 
     args = parser.parse_args()
 
