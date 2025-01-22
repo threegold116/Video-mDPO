@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 from torch.nn import CrossEntropyLoss
 from torchvision.transforms import v2
+import random
 from llava.mm_utils import process_highres_image, process_anyres_image, process_highres_image_crop_split, expand2square
 '''
 # Adapted from https://huggingface.co/MILVLG/imp-v1-3b/blob/main/vision_encoder.py
@@ -16,6 +17,13 @@ from llava.mm_utils import process_highres_image, process_anyres_image, process_
 
 
 class mDPOLlavaQwenForCausalLM(LlavaQwenForCausalLM):
+    
+    # THREEGOLD CHANGE:增加对图像操作的设置函数
+    crop_mode = "crop_images_only"
+    noisy_frames_radio = 0.2
+    def set_crop_mode(self, crop_mode,noisy_frames_radio=0.2):
+        self.crop_mode = crop_mode
+        self.noisy_frames_radio = noisy_frames_radio
     def forward(
         self,
         input_ids: torch.LongTensor = None,
@@ -74,15 +82,42 @@ class mDPOLlavaQwenForCausalLM(LlavaQwenForCausalLM):
             ), labels
             #THREEGOLD NEED CHANGE
     def crop_images(self, images):
-        new_images = []
-        for image in images:
-            resize_cropper = v2.RandomResizedCrop(size=image.size()[-2:], scale=(0.01, 0.2))
-            if image.shape[0] == 1:
-                image = resize_cropper(image.squeeze(0)).unsqueeze(0)
-            else:
-                image = resize_cropper(image)
-            new_images.append(image)
-        return new_images
+        if self.crop_mode=="crop_images_only":
+            new_images = []
+            for image in images:
+                resize_cropper = v2.RandomResizedCrop(size=image.size()[-2:], scale=(0.01, 0.2))
+                if image.shape[0] == 1:
+                    image = resize_cropper(image.squeeze(0)).unsqueeze(0)
+                else:
+                    image = resize_cropper(image)
+                new_images.append(image)
+            return new_images
+        elif self.crop_mode == "replace_frames":
+            new_images = []
+            for image in images:
+                replace_frames_num = int(image.shape[0] * self.noisy_frames_radio)  
+                replace_frames_idx = random.sample(range(image.shape[0]), replace_frames_num)    
+                for idx in replace_frames_idx:
+                    # 替换为全白图像
+                    image[idx] = torch.zeros_like(image[idx])
+                new_images.append(image)
+            return new_images
+        elif self.crop_mode == "replace_frames_and_crop_images":
+            new_images = []
+            for image in images:
+                resize_cropper = v2.RandomResizedCrop(size=image.size()[-2:], scale=(0.01, 0.2))
+                replace_frames_num = int(image.shape[0] * self.noisy_frames_radio)  
+                replace_frames_idx = random.sample(range(image.shape[0]), replace_frames_num)    
+                for idx in replace_frames_idx:
+                    # 替换为全白图像
+                    image[idx] = torch.zeros_like(image[idx])
+                crop_images_idx = range(image.shape[0])-replace_frames_idx
+                for idx in crop_images_idx:
+                    image[idx] = resize_cropper(image[idx].squeeze(0)).unsqueeze(0)                
+                new_images.append(image)
+            return new_images
+        else:
+            return images
     def process_video(self, video):
         vision_tower = self.get_vision_tower()
         if not vision_tower.is_loaded:

@@ -42,6 +42,8 @@ class TrainingArguments(transformers.TrainingArguments):
     beta: float = field(default=0.1)
     generate_during_eval: bool = field(default=False)
     max_frames_num: int = field(default=16)
+    crop_mode: str = field(default="crop_images_only")
+    noisy_frames_radio: float = field(default=0.2)
 
 @dataclass
 class LoraArguments:
@@ -178,8 +180,6 @@ def train(config_dict):
         training_args.distributed_state.distributed_type = DistributedType.DEEPSPEED
 
     local_rank = training_args.local_rank
-
-
     device_map = None
     world_size = int(os.environ.get("WORLD_SIZE", 1)) #获取环境变量WORLD_SIZE的值，如果为空，则设置为1
     ddp = world_size != 1 #如果world_size不等于1，则设置ddp为True   
@@ -208,6 +208,8 @@ def train(config_dict):
         if training_args.use_lora and lora_args.q_lora
         else None,#TODO:不知道需不需要
     )
+    #设置图像操作模式
+    model.set_crop_mode(training_args.crop_mode, training_args.noisy_frames_radio)
     
     if not training_args.use_lora:#TODO:不需要lora的时候再修改一下
         if (

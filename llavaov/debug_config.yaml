@@ -20,6 +20,8 @@ report_to: wandb
 model_max_length: 2048
 max_frames_num: 8
 gradient_checkpointing: true
+crop_mode: "replace_frames" #设置的
+noisy_frames_radio: 0.2
 use_lora: true
 bf16: true
 tf32: true
