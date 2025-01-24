@@ -9,6 +9,7 @@ per_device_eval_batch_size: 4
 gradient_accumulation_steps: 4
 # evaluation_strategy: "epoch"
 save_strategy: "steps"
+crop_mode: "replace_frames"
 save_steps: 500
 save_total_limit: 5
 learning_rate: 0.00001
@@ -34,4 +35,4 @@ lora_target_modules: all-linear
 gradient_checkpointing_kwargs: {"use_reentrant": False}
 dataset_path: /share/home/jfliang/Project/Hall/Video-mDPO/data/video_llava_hound_17k.json
 run_name: mdpo_llavaov
-output_dir: /share/home/jfliang/Project/Hall/Video-mDPO/checkpoint/llava-onevision-qwen2-mdpo-lora-mdpoloss-10k
+output_dir: /share/home/jfliang/Project/Hall/Video-mDPO/checkpoint/llava-onevision-qwen2-mdpo-lora-mdpoloss-10k-replace_frames
