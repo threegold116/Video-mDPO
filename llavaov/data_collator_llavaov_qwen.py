@@ -16,13 +16,13 @@ def load_video(video_path, max_frames_num,fps=1,force_sample=False):
     total_frame_num = len(vr)
     video_time = total_frame_num / vr.get_avg_fps()
     fps = round(vr.get_avg_fps()/fps)
-    frame_idx = [i for i in range(0, len(vr), fps)]
-    frame_time = [i/fps for i in frame_idx]
-    if len(frame_idx) > max_frames_num or force_sample:
-        sample_fps = max_frames_num
-        uniform_sampled_frames = np.linspace(0, total_frame_num - 1, sample_fps, dtype=int)
-        frame_idx = uniform_sampled_frames.tolist()
-        frame_time = [i/vr.get_avg_fps() for i in frame_idx]
+    # frame_idx = [i for i in range(0, len(vr), fps)]
+    # frame_idx = list(range(0,len(vr),len(vr)//max_frames_num))
+    # if len(frame_idx) > max_frames_num or force_sample:
+    sample_fps = max_frames_num
+    uniform_sampled_frames = np.linspace(0, total_frame_num - 1, sample_fps, dtype=int)
+    frame_idx = uniform_sampled_frames.tolist()
+    frame_time = [i/vr.get_avg_fps() for i in frame_idx]
     frame_time = ",".join([f"{i:.2f}s" for i in frame_time])
     spare_frames = vr.get_batch(frame_idx).asnumpy()
     # import pdb;pdb.set_trace()
@@ -41,7 +41,9 @@ class mDPODataCollatorLlaVAOV(DPODataCollatorWithPadding):
         video_path: str,
     ) -> Dict:
         batch = {}
-
+        #THREEGOLD CHANGE: 将prompt中的<image>替换为空字符串，并添加<image>到prompt的开头 参考llavanext中dpo的实现
+        prompt = prompt.replace("<image>", "").strip()
+        prompt = "<image>\n" + prompt
         chosen_tokens = self.tokenizer(chosen, add_special_tokens=False)
         rejected_tokens = self.tokenizer(rejected, add_special_tokens=False)
         prompt_tokens = {}
@@ -126,6 +128,7 @@ class mDPODataCollatorLlaVAOV(DPODataCollatorWithPadding):
         #     sources[0]["conversations"][0]["value"] = f'{DEFAULT_IMAGE_TOKEN}\n{time_instruciton}\n{sources[0]["conversations"][0]["value"].replace(DEFAULT_IMAGE_TOKEN, "")}'
         # image = Image.open(img_path)#打开图片
         # image_tensor = self.model.process_images([image], self.model.config).to(dtype=self.model.dtype)#将图片转换为tensor
+        assert video_tensor.shape[0] == self.max_frames_num
         batch["image"] = video_tensor
         batch["image_size"] =video_frames[0].size
         batch["modality"] = "video"
@@ -148,3 +151,6 @@ class mDPODataCollatorLlaVAOV(DPODataCollatorWithPadding):
             collated_batch["image_sizes"] = [instance["image_size"] for instance in tokenized_batch]
             collated_batch["modalities"] = [instance["modality"] for instance in tokenized_batch]
             return collated_batch
+        
+        
+        

@@ -17,8 +17,8 @@ from transformers import GPTQConfig
 from transformers.trainer_pt_utils import LabelSmoother
 from llava.model.builder import load_pretrained_model
 from llavaov.modeling_llavaov_qwen import mDPOLlavaQwenForCausalLM
-from llavaov.data_collator_llavaov_qwen import mDPODataCollatorLlaVAOV
-from video_mdpo_trainer import VideomDPOTrainer
+from llavaov.data_collator_llavaov_qwen_2 import mDPODataCollatorLlaVAOV
+from video_mdpo_trainer_2 import VideomDPOTrainer
 
 
 @dataclass
@@ -44,7 +44,9 @@ class TrainingArguments(transformers.TrainingArguments):
     max_frames_num: int = field(default=16)
     crop_mode: str = field(default="crop_images_only")
     noisy_frames_radio: float = field(default=0.2)
-
+    mode: str = field(default="perturbation_loss")
+    # ddp_find_unused_parameters: bool = field(default=False) #THREEGOLD CHANGE:根据https://github.com/tloen/alpaca-lora/issues/301
+    # gradient_checkpointing_kwargs: dict = field(de={"use_reentrant": False})
 @dataclass
 class LoraArguments:
     lora_r: int = 64
@@ -180,7 +182,7 @@ def train(config_dict):
         training_args.distributed_state.distributed_type = DistributedType.DEEPSPEED
 
     local_rank = training_args.local_rank
-    device_map = None
+    device_map = {"": "cuda:" + str(int(os.environ.get("LOCAL_RANK") or 0))}
     world_size = int(os.environ.get("WORLD_SIZE", 1)) #获取环境变量WORLD_SIZE的值，如果为空，则设置为1
     ddp = world_size != 1 #如果world_size不等于1，则设置ddp为True   
     if lora_args.q_lora:
@@ -202,8 +204,8 @@ def train(config_dict):
     model = mDPOLlavaQwenForCausalLM.from_pretrained(
         model_args.model_name_or_path,
         config=config,
-        device_map='auto',
         trust_remote_code=True,
+        device_map=device_map,
         quantization_config=GPTQConfig(bits=4, disable_exllama=True)
         if training_args.use_lora and lora_args.q_lora
         else None,#TODO:不知道需不需要
@@ -287,6 +289,7 @@ def train(config_dict):
         max_length=training_args.model_max_length,
         peft_config=lora_config if training_args.use_lora else None,#DPOTrainer的优化，Trainer中需要传入peftmodel
         generate_during_eval=training_args.generate_during_eval,
+        mode=training_args.mode
     )
 
     #THREEGOLD CHANGE：控制mm_vision_tower是否冻结
@@ -294,10 +297,9 @@ def train(config_dict):
         trainer.model.get_vision_tower().requires_grad_(True)
     else:
         trainer.model.get_vision_tower().requires_grad_(False)  
-    
     print_trainable_parameters(model)
     if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
-        trainer.train(resume_from_checkpoint=False)
+        trainer.train(resume_from_checkpoint=True)#THREEGOLD CHANGE: 从checkpoint开始训练
     else:
         trainer.train()
     trainer.save_state()
@@ -324,6 +326,10 @@ def train(config_dict):
         safe_save_model_for_hf_trainer(trainer=trainer, output_dir=training_args.output_dir)
 
 if __name__ == "__main__":
-    with open("/share/home/jfliang/Project/Hall/Video-mDPO/llavaov/debug_config.yaml") as f:#读取文件
+    if len(sys.argv) > 1:
+        config_path = sys.argv[1]
+    else:
+        config_path = "/share/home/jfliang/Project/Hall/Video-mDPO/llavaov/config_mdpo_loss.yaml"
+    with open(config_path) as f:#读取文件
         cfg = yaml.load(f, Loader=yaml.FullLoader)
     train(cfg)

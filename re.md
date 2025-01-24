@@ -40,3 +40,8 @@ b. 修改llava_qwen.py加上crop_images函数
 c. 修改config.yaml
 d. 修改merge_lora.py
 e. vit的lora要去掉吗？
+
+
+7. 代码说明
+video_mdpo_trainer.py: 保留mdpo的损失，改为视频
+video_mdpo_trainer_2.py: 加入扰动文本损失

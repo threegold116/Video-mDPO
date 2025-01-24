@@ -7,6 +7,7 @@ from typing import List, Optional, Tuple, Union, Dict
 import torch
 import torch.nn as nn
 from torch.nn import CrossEntropyLoss
+import numpy as np
 from torchvision.transforms import v2
 import random
 from llava.mm_utils import process_highres_image, process_anyres_image, process_highres_image_crop_split, expand2square
@@ -101,6 +102,17 @@ class mDPOLlavaQwenForCausalLM(LlavaQwenForCausalLM):
                     # 替换为全白图像
                     image[idx] = torch.zeros_like(image[idx])
                 new_images.append(image)
+            return new_images
+        elif self.crop_mode == "shuffle_frames":
+            new_images = []
+            for image in images:
+                new_image = []
+                random_frames_idx = list(range(image.shape[0]))
+                random.shuffle(random_frames_idx)
+                for idx in random_frames_idx:
+                    new_image.append(image[idx])
+                new_image = torch.stack(new_image,dim=0)
+                new_images.append(new_image)
             return new_images
         elif self.crop_mode == "replace_frames_and_crop_images":
             new_images = []

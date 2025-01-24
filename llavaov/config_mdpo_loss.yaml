@@ -1,4 +1,4 @@
-model_name_or_path: "/share/home/jfliang/Weights/Bunny-v1_0-3B"
+model_name_or_path: "/share/home/jfliang/Weights/llava-onevision-qwen2-7b-ov"
 beta: 0.1
 output_dir: null  # to be set by the script
 bf16: true
@@ -6,18 +6,22 @@ fix_vit: true
 num_train_epochs: 3
 per_device_train_batch_size: 2
 per_device_eval_batch_size: 4
-gradient_accumulation_steps: 1
+gradient_accumulation_steps: 4
 # evaluation_strategy: "epoch"
-save_strategy: "epoch"
-save_total_limit: 1
+save_strategy: "steps"
+save_steps: 500
+save_total_limit: 5
 learning_rate: 0.00001
 weight_decay: 0.05
+ddp_find_unused_parameters: false
 adam_beta2: 0.98
 warmup_ratio: 0.1
 lr_scheduler_type: "cosine"
 logging_steps: 10
+mode: "mdpo_loss"
 report_to: wandb
 model_max_length: 2048
+max_frames_num: 8
 gradient_checkpointing: true
 use_lora: true
 bf16: true
@@ -27,6 +31,7 @@ remove_unused_columns: false
 lora_r: 64  
 lora_alpha: 128 
 lora_target_modules: all-linear 
-dataset_path: /share/home/jfliang/Datasets/mDPO-preference-data/vlfeedback_llava_10k.json
-run_name: mdpo_bunny
-output_dir: /share/home/jfliang/Project/Hall/Video-mDPO/checkpoint/mdpo_bunny
+gradient_checkpointing_kwargs: {"use_reentrant": False}
+dataset_path: /share/home/jfliang/Project/Hall/Video-mDPO/data/video_llava_hound_17k.json
+run_name: mdpo_llavaov
+output_dir: /share/home/jfliang/Project/Hall/Video-mDPO/checkpoint/llava-onevision-qwen2-mdpo-lora-mdpoloss-10k

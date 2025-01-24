@@ -39,6 +39,7 @@ class TrainingArguments(transformers.TrainingArguments):
     fix_vit: bool = True
     beta: float = field(default=0.1)
     generate_during_eval: bool = field(default=False)
+    ddp_find_unused_parameters: bool = field(default=False) #THREEGOLD CHANGE:根据https://github.com/tloen/alpaca-lora/issues/301
 
 
 @dataclass
@@ -200,7 +201,6 @@ def train(config_dict):
         model_args.model_name_or_path,
         config=config,
         cache_dir=training_args.cache_dir,
-        device_map='auto',
         trust_remote_code=True,
         quantization_config=GPTQConfig(bits=4, disable_exllama=True)
         if training_args.use_lora and lora_args.q_lora

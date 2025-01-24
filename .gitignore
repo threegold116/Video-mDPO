@@ -4,3 +4,4 @@ data/*
 **/checkpoint/*
 **/checkpoint_merge/*
 .vscode/*
+*.tar.gz
