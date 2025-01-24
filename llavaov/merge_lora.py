@@ -8,7 +8,7 @@ from llava.model.builder import load_pretrained_model
 def merge_lora(args):
     base_model= LlavaQwenForCausalLM.from_pretrained(args.model_base,device_map="auto")
     model = PeftModel.from_pretrained(base_model, args.model_path)
-    model.merge_and_unload()
+    model = model.merge_and_unload()
     model.save_pretrained(args.save_model_path)
 
 
