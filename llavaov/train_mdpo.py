@@ -42,7 +42,7 @@ class TrainingArguments(transformers.TrainingArguments):
     beta: float = field(default=0.1)
     generate_during_eval: bool = field(default=False)
     max_frames_num: int = field(default=16)
-    crop_mode: str = field(default="crop_images_only")
+    crop_mode: str = field(default="shuffle_frames")
     noisy_frames_radio: float = field(default=0.2)
     mode: str = field(default="perturbation_loss")
     # ddp_find_unused_parameters: bool = field(default=False) #THREEGOLD CHANGE:根据https://github.com/tloen/alpaca-lora/issues/301
@@ -329,7 +329,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         config_path = sys.argv[1]
     else:
-        config_path = "/share/home/jfliang/Project/Hall/Video-mDPO/llavaov/config_mdpo_loss.yaml"
+        config_path = "/share/home/jfliang/Project/Hall/Video-mDPO/llavaov/config_mdpo_loss_per_crop_frames.yaml"
     with open(config_path) as f:#读取文件
         cfg = yaml.load(f, Loader=yaml.FullLoader)
     train(cfg)
