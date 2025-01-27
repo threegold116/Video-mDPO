@@ -187,6 +187,9 @@ class mDPODataCollatorLlaVAOV(DPODataCollatorWithPadding):
     def collate(self, batch):
         # first, pad everything to the same length
         padded_batch = {}
+        if self.tokenizer.pad_token_id is None:
+            # self.tokenizer.pad_token_id = self.tokenizer.eos_token_id  # FIXME: this could only be triggered for llama3 model.
+            self.tokenizer.pad_token_id = 0 # This gets the best result. Don't know why.
         for k in batch[0].keys():
             if k.endswith("_input_ids") or k.endswith("_attention_mask") or k.endswith("_labels"):
                 if self.is_encoder_decoder:
