@@ -45,3 +45,7 @@ e. vit的lora要去掉吗？
 7. 代码说明
 video_mdpo_trainer.py: 保留mdpo的损失，改为视频
 video_mdpo_trainer_2.py: 加入扰动文本损失
+
+
+8. 其他指令
+rsync -azvvP -e 'ssh -p 22 -i /home/sxjiang/.ssh/id_rsa'  -r jfliang@219.217.229.12:/share/home/jfliang/Project/Hall/Video-mDPO/checkpoint/llava-onevision-qwen2-mdpo-lora-mdpoloss-per-10k-shuffle_frames /home/sxjiang/myproject/Hall/Video-mDPO/checkpoint_lora  --progress
