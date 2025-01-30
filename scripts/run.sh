@@ -17,4 +17,4 @@ MASTER_PORT=6001
 
 accelerate launch --config_file=/share/home/jfliang/Project/Hall/Video-mDPO/scripts/multi_gpu.yaml\
     /share/home/jfliang/Project/Hall/Video-mDPO/llavaov/train_mdpo.py\
-    /share/home/jfliang/Project/Hall/Video-mDPO/llavaov/config_mdpo_loss_per.yaml
+    /share/home/jfliang/Project/Hall/Video-mDPO/llavaov/config_mdpo_loss_per_replace_frames.yaml

@@ -2,6 +2,7 @@ import sys
 sys.path.insert(1,"/share/home/jfliang/Project/Hall/Video-mDPO")
 import json
 import logging
+logging.basicConfig(level=logging.INFO)
 import os
 import pathlib
 from dataclasses import dataclass, field
@@ -18,7 +19,7 @@ from transformers.trainer_pt_utils import LabelSmoother
 from llava.model.builder import load_pretrained_model
 from llavaov.modeling_llavaov_qwen import mDPOLlavaQwenForCausalLM
 from llavaov.data_collator_llavaov_qwen_2 import mDPODataCollatorLlaVAOV
-from video_mdpo_trainer_hound import VideomDPOTrainer
+from video_mdpo_trainer_2 import VideomDPOTrainer
 
 
 @dataclass
@@ -165,7 +166,7 @@ def print_trainable_parameters(model):
 
 def train(config_dict):
     global local_rank
-
+    logging.info("trainging config_dict:{}".format(config_dict))
     os.environ["WANDB_PROJECT"] = "VLM_DPO"
     parser = transformers.HfArgumentParser(
         (ModelArguments, TrainingArguments, LoraArguments) #定义参数
@@ -330,7 +331,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         config_path = sys.argv[1]
     else:
-        config_path = "/share/home/jfliang/Project/Hall/Video-mDPO/llavaov/config_mdpo_loss_per_crop_frames.yaml"
+        config_path = "/share/home/jfliang/Project/Hall/Video-mDPO/llavaov/config_mdpo_loss_per_replace_and_shuffle_frames.yaml"
     with open(config_path) as f:#读取文件
         cfg = yaml.load(f, Loader=yaml.FullLoader)
     train(cfg)
