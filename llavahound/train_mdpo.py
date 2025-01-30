@@ -1,5 +1,4 @@
 import sys
-sys.path.insert(1,"/share/home/jfliang/Project/Hall/Video-mDPO/")
 import json
 import logging
 import os
