@@ -2,6 +2,7 @@
 **/wandb/*
 **/checkpoint/*
 **/checkpoint_merge/*
+**/checkpoint_lora/*
 .vscode/*
 *.tar.gz
 *.json

@@ -15,6 +15,6 @@ export CUDA_VISIBLE_DEVICES=4,5,6,7
 #     train_mdpo.py \
 #     /share/home/jfliang/Project/Hall/Video-mDPO/llavaov/config_mdpo_loss.yaml
 
-accelerate launch --config_file=/data/scir/sxjiang/project/Video-mDPO/scripts/multi_gpu.yaml\
-    /data/scir/sxjiang/project/Video-mDPO/llavahound/train_mdpo.py\
-    /data/scir/sxjiang/project/Video-mDPO/llavahound/config_mdpo_loss_per_shuffle_frames.yaml
+accelerate launch --config_file=/share/home/jfliang/Project/Hall/Video-mDPO/scripts/multi_gpu.yaml\
+    /share/home/jfliang/Project/Hall/Video-mDPO/llavaov/train_mdpo.py\
+    /share/home/jfliang/Project/Hall/Video-mDPO/llavaov/config_mdpo_loss_per_replace_frames.yaml

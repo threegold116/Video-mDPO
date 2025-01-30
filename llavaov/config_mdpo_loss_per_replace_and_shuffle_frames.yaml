@@ -20,6 +20,7 @@ lr_scheduler_type: "cosine"
 logging_steps: 10
 mode: "perturbation_loss"
 crop_mode: "replace_and_shuffle_frames"
+noisy_frames_radio: 0.5
 report_to: wandb
 model_max_length: 2048
 max_frames_num: 8
@@ -35,4 +36,4 @@ lora_target_modules: all-linear
 gradient_checkpointing_kwargs: {"use_reentrant": False}
 dataset_path: /share/home/jfliang/Project/Hall/Video-mDPO/data/video_llava_hound_17k.json
 run_name: mdpo_llavaov
-output_dir: /share/home/jfliang/Project/Hall/Video-mDPO/checkpoint/llava-onevision-qwen2-mdpo-lora-mdpoloss-per-10k
+output_dir: /share/home/jfliang/Project/Hall/Video-mDPO/checkpoint/llava-onevision-qwen2-mdpo-lora-mdpoloss-per-10k-replace_and_shuffle_frames-radio-50
