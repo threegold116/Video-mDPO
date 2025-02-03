@@ -19,7 +19,7 @@ warmup_ratio: 0.1
 lr_scheduler_type: "cosine"
 logging_steps: 10
 mode: "perturbation_loss"
-crop_mode: "crop_images_only"
+crop_mode: "replace_frames"
 report_to: wandb
 model_max_length: 2048
 max_frames_num: 8
@@ -35,4 +35,4 @@ lora_target_modules: all-linear
 gradient_checkpointing_kwargs: {"use_reentrant": False}
 dataset_path: /data/scir/sxjiang/project/Video-mDPO/data/video_llava_hound_17k_acl_gpu.json
 run_name: mdpo_llavahound
-output_dir: /data/scir/sxjiang/project/Video-mDPO/checkpoint/llava-hound-mdpo-lora-mdpoloss-10k-shuffle_frames
+output_dir: /data/scir/sxjiang/project/Video-mDPO/checkpoint/llava-hound-mdpo-lora-mdpoloss-per-10k-replace-frames

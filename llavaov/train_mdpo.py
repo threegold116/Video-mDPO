@@ -2,6 +2,7 @@ import sys
 sys.path.insert(1,"/share/home/jfliang/Project/Hall/Video-mDPO")
 import json
 import logging
+logging.basicConfig(level=logging.INFO)
 import os
 import pathlib
 from dataclasses import dataclass, field
@@ -18,7 +19,7 @@ from transformers.trainer_pt_utils import LabelSmoother
 from llava.model.builder import load_pretrained_model
 from llavaov.modeling_llavaov_qwen import mDPOLlavaQwenForCausalLM
 from llavaov.data_collator_llavaov_qwen_2 import mDPODataCollatorLlaVAOV
-from video_mdpo_trainer_hound import VideomDPOTrainer
+from video_mdpo_trainer_2 import VideomDPOTrainer
 
 
 @dataclass
@@ -45,6 +46,7 @@ class TrainingArguments(transformers.TrainingArguments):
     crop_mode: str = field(default="shuffle_frames")
     noisy_frames_radio: float = field(default=0.2)
     mode: str = field(default="perturbation_loss")
+    anchor_mode: str = field(default="anchor_loss")
     # ddp_find_unused_parameters: bool = field(default=False) #THREEGOLD CHANGE:根据https://github.com/tloen/alpaca-lora/issues/301
     # gradient_checkpointing_kwargs: dict = field(de={"use_reentrant": False})
 @dataclass
@@ -165,7 +167,7 @@ def print_trainable_parameters(model):
 
 def train(config_dict):
     global local_rank
-
+    logging.info("trainging config_dict:{}".format(config_dict))
     os.environ["WANDB_PROJECT"] = "VLM_DPO"
     parser = transformers.HfArgumentParser(
         (ModelArguments, TrainingArguments, LoraArguments) #定义参数
@@ -290,7 +292,8 @@ def train(config_dict):
         max_length=training_args.model_max_length,
         peft_config=lora_config if training_args.use_lora else None,#DPOTrainer的优化，Trainer中需要传入peftmodel
         generate_during_eval=training_args.generate_during_eval,
-        mode=training_args.mode
+        mode=training_args.mode,
+        anchor_mode=training_args.anchor_mode
     )
 
     #THREEGOLD CHANGE：控制mm_vision_tower是否冻结
@@ -330,7 +333,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         config_path = sys.argv[1]
     else:
-        config_path = "/share/home/jfliang/Project/Hall/Video-mDPO/llavaov/config_mdpo_loss_per_crop_frames.yaml"
+        config_path = "/share/home/jfliang/Project/Hall/Video-mDPO/llavaov/config_mdpo_loss_per_replace_and_shuffle_frames.yaml"
     with open(config_path) as f:#读取文件
         cfg = yaml.load(f, Loader=yaml.FullLoader)
     train(cfg)
