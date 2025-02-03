@@ -144,6 +144,22 @@ class mDPOLlavaQwenForCausalLM(LlavaQwenForCausalLM):
                 new_image = torch.stack(new_image,dim=0)
                 new_images.append(new_image)
             return new_images
+        elif self.crop_mode == "crop_and_shuffle_frames":
+            new_images = []
+            for image in images:
+                resize_cropper = v2.RandomResizedCrop(size=image.size()[-2:], scale=(0.01, 0.2))
+                if image.shape[0] == 1:
+                    image = resize_cropper(image.squeeze(0)).unsqueeze(0)
+                else:
+                    image = resize_cropper(image)
+                new_image = []
+                random_frames_idx = list(range(image.shape[0]))
+                random.shuffle(random_frames_idx)
+                for idx in random_frames_idx:
+                    new_image.append(image[idx])
+                new_image = torch.stack(new_image,dim=0)
+                new_images.append(new_image)
+            return new_images
         else:
             return images
     def process_video(self, video):

@@ -1,6 +1,27 @@
 #把原始json中的video路径给取代
 import json
 import os
+clear_count=0
+def clear_text(text):
+    global clear_count
+    noisy_text_list='''perturbation
+    The perturbation:
+(Perturbation):
+**Perturbation:** 
+(Perturbation): 
+The perturbation could be articulated as follows: 
+**Perturbation**: 
+The perturbation could be framed as follows: 
+The perturbation could be constructed as follows: 
+Certainly! Here’s the perturbation:
+Certainly! Here’s a crafted perturbation based on the provided guidelines:'''.split("\n")
+    for noisy_text in noisy_text_list:
+        noisy_text=noisy_text.strip()
+        if noisy_text.lower() in text.lower():
+            text=text.lower().replace(noisy_text.lower(),"")
+            clear_count+=1
+    return text
+
 
 origin_json_path="/share/home/jfliang/Project/Video_hallucination/video_instruction_train_dpo_sft_dpo_17k.jsonl"
 new_json_path="/share/home/jfliang/Project/Hall/Video-mDPO/data/video_llava_hound_17k.json"
@@ -21,7 +42,7 @@ for line in data:
         if line["video"] in file:
             with open(os.path.join(perturbation_dir,file),"r") as f:
                 perturbation_data=json.load(f)
-                line["perturbation"]=perturbation_data["perturbation"]
+                line["perturbation"]=clear_text(perturbation_data["perturbation"])
                 break
     if "perturbation" not in line:
         continue
@@ -36,5 +57,6 @@ for line in data:
         print("video not exists")
 print(len(new_data))
 print(len(data))
+print(clear_count)
 with open(new_json_path,"w") as f:
     json.dump(new_data,f)

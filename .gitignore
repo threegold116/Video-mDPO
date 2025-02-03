@@ -6,3 +6,4 @@
 .vscode/*
 *.tar.gz
 *.json
+*.yaml

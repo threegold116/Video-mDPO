@@ -6,8 +6,9 @@ from trl.trainer.utils import pad_to_length
 
 class VideomDPOTrainer(DPOTrainer):
     
-    def __init__(self, mode="mdpo_loss",*args, **kwargs):
+    def __init__(self, mode="mdpo_loss",anchor_mode="anchor_loss",*args, **kwargs):
         self.mode = mode
+        self.anchor_mode = anchor_mode
         super().__init__(*args, **kwargs)
     
     
@@ -165,11 +166,14 @@ class VideomDPOTrainer(DPOTrainer):
             perturbation_conditional_logits = perturbation_conditional_pi_logratios - perturbation_conditional_ref_logratios
 
         anchor_logits = policy_chosen_logps - reference_chosen_logps  # anchored preference
-
-        # mDPO 
-        losses = -torch.nn.functional.logsigmoid(self.beta * logits) \
-            -torch.nn.functional.logsigmoid(self.beta * image_conditional_logits) \
-            -torch.nn.functional.logsigmoid(self.beta * anchor_logits) 
+        if self.anchor_mode == "no_anchor_loss":
+            losses = -torch.nn.functional.logsigmoid(self.beta * logits) \
+                -torch.nn.functional.logsigmoid(self.beta * image_conditional_logits) 
+        # mDPO loss
+        else:
+            losses = -torch.nn.functional.logsigmoid(self.beta * logits) \
+                -torch.nn.functional.logsigmoid(self.beta * image_conditional_logits) \
+                -torch.nn.functional.logsigmoid(self.beta * anchor_logits) 
         
         if reference_perturbation_logps!=None and  self.mode == "perturbation_loss":
             losses += -torch.nn.functional.logsigmoid(self.beta * perturbation_conditional_logits)

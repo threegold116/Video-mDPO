@@ -46,6 +46,7 @@ class TrainingArguments(transformers.TrainingArguments):
     crop_mode: str = field(default="shuffle_frames")
     noisy_frames_radio: float = field(default=0.2)
     mode: str = field(default="perturbation_loss")
+    anchor_mode: str = field(default="anchor_loss")
     # ddp_find_unused_parameters: bool = field(default=False) #THREEGOLD CHANGE:根据https://github.com/tloen/alpaca-lora/issues/301
     # gradient_checkpointing_kwargs: dict = field(de={"use_reentrant": False})
 @dataclass
@@ -291,7 +292,8 @@ def train(config_dict):
         max_length=training_args.model_max_length,
         peft_config=lora_config if training_args.use_lora else None,#DPOTrainer的优化，Trainer中需要传入peftmodel
         generate_during_eval=training_args.generate_during_eval,
-        mode=training_args.mode
+        mode=training_args.mode,
+        anchor_mode=training_args.anchor_mode
     )
 
     #THREEGOLD CHANGE：控制mm_vision_tower是否冻结
