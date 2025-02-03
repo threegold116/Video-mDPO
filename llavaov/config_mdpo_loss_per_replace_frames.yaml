@@ -1,4 +1,4 @@
-model_name_or_path: "/share/home/jfliang/Weights/llava-onevision-qwen2-7b-ov"
+model_name_or_path: "/data/scir/sxjiang/model/llava-onevision-qwen2-7b-ov"
 beta: 0.1
 output_dir: null  # to be set by the script
 bf16: true
@@ -20,7 +20,7 @@ lr_scheduler_type: "cosine"
 logging_steps: 10
 mode: "perturbation_loss"
 crop_mode: "replace_frames"
-noisy_frames_radio: 0.5
+noisy_frames_radio: 1.0
 report_to: wandb
 model_max_length: 2048
 max_frames_num: 8
@@ -34,6 +34,6 @@ lora_r: 64
 lora_alpha: 128 
 lora_target_modules: all-linear 
 gradient_checkpointing_kwargs: {"use_reentrant": False}
-dataset_path: /share/home/jfliang/Project/Hall/Video-mDPO/data/video_llava_hound_17k.json
+dataset_path: /data/scir/sxjiang/project/Video-mDPO/data/video_llava_hound_17k_acl_gpu.json
 run_name: mdpo_llavaov
-output_dir: /share/home/jfliang/Project/Hall/Video-mDPO/checkpoint/llava-onevision-qwen2-mdpo-lora-mdpoloss-per-10k-replace_frames-radio-50
+output_dir: /data/scir/sxjiang/project/Video-mDPO/checkpoint/llava-onevision-qwen2-mdpo-lora-mdpoloss-per-10k-replace_frames-radio-100
