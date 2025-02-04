@@ -1,7 +1,9 @@
+
+import os
 import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import json
 import logging
-import os
 import pathlib
 from dataclasses import dataclass, field
 from typing import Optional

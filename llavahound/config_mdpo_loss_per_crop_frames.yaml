@@ -1,4 +1,4 @@
-model_name_or_path: "/data/scir/sxjiang/model/LLaVA-Hound-SFT"
+model_name_or_path: "/share/home/jfliang/Weights/LLaVA-Hound-SFT"
 beta: 0.1
 output_dir: null  # to be set by the script
 bf16: true
@@ -6,7 +6,7 @@ fix_vit: true
 num_train_epochs: 3
 per_device_train_batch_size: 1
 per_device_eval_batch_size: 4
-gradient_accumulation_steps: 16 #确保batch_size*gradient_accumulation_steps*num_processes=64
+gradient_accumulation_steps: 8 #确保batch_size*gradient_accumulation_steps*num_processes=64
 # evaluation_strategy: "epoch"
 save_strategy: "steps"
 save_steps: 500
@@ -33,6 +33,6 @@ lora_r: 64
 lora_alpha: 128 
 lora_target_modules: all-linear 
 gradient_checkpointing_kwargs: {"use_reentrant": False}
-dataset_path: /data/scir/sxjiang/project/Video-mDPO/data/video_llava_hound_17k_acl_gpu.json
+dataset_path: /share/home/jfliang/Project/Hall/Video-mDPO/data/video_llava_hound_17k.json
 run_name: mdpo_llavahound
-output_dir: /data/scir/sxjiang/project/Video-mDPO/checkpoint/llava-hound-mdpo-lora-mdpoloss-per-10k-crop-frames
+output_dir: /share/home/jfliang/Project/Hall/Video-mDPO/checkpoint/llava-hound-mdpo-lora-mdpoloss-per-10k-crop-frames-clear_text

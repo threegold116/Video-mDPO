@@ -103,6 +103,18 @@ class mDPOLlavaQwenForCausalLM(LlavaQwenForCausalLM):
                     image[idx] = torch.zeros_like(image[idx])
                 new_images.append(image)
             return new_images
+        elif self.crop_mode == "shuffle_frames_2":
+            new_images = []
+            for image in images:
+                new_image = []
+                random_frames_idx = list(range(image.shape[0]))
+                # random.shuffle(random_frames_idx)
+                random_frames_idx = random_frames_idx[::-1]
+                for idx in random_frames_idx:
+                    new_image.append(image[idx])
+                new_image = torch.stack(new_image,dim=0)
+                new_images.append(new_image)
+            return new_images
         elif self.crop_mode == "shuffle_frames":
             new_images = []
             for image in images:

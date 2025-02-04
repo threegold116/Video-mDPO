@@ -333,7 +333,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         config_path = sys.argv[1]
     else:
-        config_path = "/share/home/jfliang/Project/Hall/Video-mDPO/llavaov/config_mdpo_loss_per_replace_and_shuffle_frames.yaml"
+        config_path = "/share/home/jfliang/Project/Hall/Video-mDPO/llavaov/debug.yaml"
     with open(config_path) as f:#读取文件
         cfg = yaml.load(f, Loader=yaml.FullLoader)
     train(cfg)
