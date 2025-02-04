@@ -35,4 +35,4 @@ lora_target_modules: all-linear
 gradient_checkpointing_kwargs: {"use_reentrant": False}
 dataset_path: /data/scir/sxjiang/project/Video-mDPO/data/video_llava_hound_17k_acl_gpu.json
 run_name: mdpo_llavahound
-output_dir: /data/scir/sxjiang/project/Video-mDPO/checkpoint/llava-hound-mdpo-lora-mdpoloss-per-10k-crop-frames
+output_dir: /data/scir/sxjiang/project/Video-mDPO/checkpoint/llava-hound-mdpo-lora-mdpoloss-per-10k-crop-frames-clear-text
